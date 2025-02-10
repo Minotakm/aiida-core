@@ -183,14 +183,22 @@ class SlurmScheduler(Scheduler):
         """
         from aiida.common.exceptions import FeatureNotAvailable
 
+        hostname = self.transport.hostname
         # I add the environment variable SLURM_TIME_FORMAT in front to be
         # sure to get the times in 'standard' format
         command = [
             "SLURM_TIME_FORMAT='standard'",
             'squeue',
-            '--noheader',
-            f"-o '{_FIELD_SEPARATOR.join(_[0] for _ in self.fields)}'",
+            '--noheader'
         ]
+
+        # If running on merlin7, use optimized version
+        if hostname == "login001.merlin7.psi.ch":
+           command.extend([
+               "--clusters=all" 
+           ])
+
+        command.append(f"-o '{_FIELD_SEPARATOR.join(_[0] for _ in self.fields)}'")
 
         if user and jobs:
             raise FeatureNotAvailable('Cannot query by user and job(s) in SLURM')
